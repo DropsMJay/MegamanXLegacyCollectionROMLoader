@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="MMXLCROMHook.vcxproj" Id="77696d13-2410-41df-8537-df21bbd8697d" />
+</Solution>

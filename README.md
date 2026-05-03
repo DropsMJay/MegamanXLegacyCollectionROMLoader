@@ -9,22 +9,22 @@ Mega Man X2
 Mega Man X3
 
 # Install:
-Drop the content of the zip file on the root folder (steamapps\common\Mega Man X Legacy Collection)
-Drop RXC1.exe into "mmxlc_rom_extract_to_roms.py" to extract the roms
-The extracted ROMs will be placed inside the "roms" folder
-Replace them with your own ROMs if desired.
+Drop the content of the zip file on the root folder (steamapps\common\Mega Man X Legacy Collection)<br/>
+Drop RXC1.exe into "mmxlc_rom_extract_to_roms.py" to extract the roms<br/>
+The extracted ROMs will be placed inside the "roms" folder<br/>
+Replace them with your own ROMs if desired.<br/>
 Enjoy
 
 # Warning:
-ROM files must be the exact expected size or smaller to work correctly.
-Smaller ROMs are automatically padded with 00.
-Larger ROMs are currently not supported due to internal emulator size limitations.
+ROM files must be the exact expected size or smaller to work correctly.<br/>
+Smaller ROMs are automatically padded with 00.<br/>
+Larger ROMs are currently not supported due to internal emulator size limitations.<br/>
 Maybe in future versions, i'll add support for bigger roms (Zero Project)
 
 # Build requirements
-Visual Studio
-C++
-MinHook (https://github.com/TsudaKageyu/minhook)
+Visual Studio<br/>
+C++<br/>
+MinHook (https://github.com/TsudaKageyu/minhook)<br/>
 Also Python 3.14.4 for using the .py script
 
 # Special Thanks:

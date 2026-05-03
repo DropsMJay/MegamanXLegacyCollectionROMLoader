@@ -29,6 +29,6 @@ Also Python 3.14.4 for using the .py script
 
 # Special Thanks:
 
-s3phir0th115 for the original rom extractor script
-Tsuda Kageyu for creating MinHook and facilitating the process.
+s3phir0th115 for the original rom extractor script<br/>
+Tsuda Kageyu for creating MinHook and facilitating the process.<br/>
 NSA for creating Ghidra

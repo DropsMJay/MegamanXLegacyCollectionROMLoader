@@ -1,0 +1,6 @@
+C:\Users\Marcos\source\repos\MMXLCROMHook\dllmain.cpp;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\dllmain.obj
+C:\Users\Marcos\source\repos\MMXLCROMHook\minhook\buffer.c;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\buffer.obj
+C:\Users\Marcos\source\repos\MMXLCROMHook\minhook\hde\hde32.c;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\hde32.obj
+C:\Users\Marcos\source\repos\MMXLCROMHook\minhook\hook.c;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\hook.obj
+C:\Users\Marcos\source\repos\MMXLCROMHook\minhook\trampoline.c;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\trampoline.obj
+C:\Users\Marcos\source\repos\MMXLCROMHook\pch.cpp;C:\Users\Marcos\source\repos\MMXLCROMHook\MMXLCROMHook\Release\pch.obj

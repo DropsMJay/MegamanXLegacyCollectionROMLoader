@@ -31,4 +31,4 @@ Also Python 3.14.4 for using the .py script
 
 s3phir0th115 for the original rom extractor script<br/>
 Tsuda Kageyu for creating MinHook and facilitating the process.<br/>
-NSA for creating Ghidra
+The Ghidra and xdbg teams

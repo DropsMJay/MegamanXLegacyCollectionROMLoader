@@ -11,9 +11,12 @@
 //Notes: Debug thingies are still present but commented
 
 //Supported files:
-//- roms\rockmanxu.sfc (Mega Man X International version)
-//- roms\rockmanx2u.sfc (Mega Man X2 International version)
-//- roms\rockmanx3u.sfc (Mega Man X3 International version)
+//- roms\rockmanx.sfc (Rock Man X)
+//- roms\rockmanxu.sfc (Mega Man X)
+//- roms\rockmanx2.sfc (Rock Man X2)
+//- roms\rockmanx2u.sfc (Mega Man X2)
+//- roms\rockmanx3.sfc (Rock Man X3)
+//- roms\rockmanx3u.sfc (Mega Man X3)
 //
 //Notes:
 //- Debug/investigation hooks were intentionally commented out instead of deleted.
@@ -65,14 +68,14 @@ CreateFileW_t OriginalCreateFileW = nullptr;
 //FUN_00AD53C0
 //Creates a reusable function pointer type for the original RXC1 internal function
 //responsible for mapping ROM banks into emulator memory.
-typedef DWORD(__cdecl* MapRomBanksToEmulatorMemory_t)( 
+typedef DWORD(__cdecl* MapRomBanksToEmulatorMemory_t)(
     //Main game/emulator structure (current loaded game)
     DWORD GameDriver,
     //Pointer to the beginning of the loaded ROM data
     BYTE* RomBase,
     //Total ROM size in bytes
     DWORD RomSize
-);
+    );
 
 //Stores the original RXC1 function address before the hook redirects execution.
 MapRomBanksToEmulatorMemory_t Original_MapRomBanksToEmulatorMemory = nullptr;
@@ -94,15 +97,18 @@ struct ExternalRomSlot
 //If CurrentGameName matches GameName, this ROM will be loaded and used.
 ExternalRomSlot ExternalRoms[] =
 {
+    { "rockmanx",   "roms\\rockmanx.sfc",   nullptr, 0, false },
     { "rockmanxu",  "roms\\rockmanxu.sfc",  nullptr, 0, false },
+    { "rockmanx2",  "roms\\rockmanx2.sfc",  nullptr, 0, false },
     { "rockmanx2u", "roms\\rockmanx2u.sfc", nullptr, 0, false },
+    { "rockmanx3",  "roms\\rockmanx3.sfc",  nullptr, 0, false },
     { "rockmanx3u", "roms\\rockmanx3u.sfc", nullptr, 0, false },
 };
 
 void WriteLogLine(const char* Text)
 {
-//Prevents null text writes and avoids recursive logging loops
-//caused by CreateFile hooks calling this function again.
+    //Prevents null text writes and avoids recursive logging loops
+    //caused by CreateFile hooks calling this function again.
 #if RXC1_ENABLE_LOG
     if (!Text || IsLogging)
         return;
@@ -131,7 +137,7 @@ void WriteLogLine(const char* Text)
 
     IsLogging = false; //Releases the recursion protection flag.
 #else //Prevents compiler warnings when logging is disabled.
-    (void)Text; 
+    (void)Text;
 #endif
 }
 
@@ -140,7 +146,7 @@ ExternalRomSlot* FindExternalRomSlot(const char* GameName) //Searches the extern
 {
     if (!GameName) //If there is no game name, there is nothing to search for.
         return nullptr;
-    
+
     for (int i = 0; i < (int)(sizeof(ExternalRoms) / sizeof(ExternalRoms[0])); i++)  //Loops through every supported external ROM entry.
     {
         if (strcmp(GameName, ExternalRoms[i].GameName) == 0) //Compares the current game name with this table entry.
@@ -184,7 +190,7 @@ bool LoadExternalRomOnce(ExternalRomSlot* Slot, DWORD ExpectedSize) //Loads an e
 
     //Gets the external ROM file size in bytes.
     DWORD FileSize = GetFileSize(FileHandle, nullptr);
-    
+
     //Logs the real file size and the size expected by the internal emulator mapping.
     char Buffer[512];
     sprintf_s(

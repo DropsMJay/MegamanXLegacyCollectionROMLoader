@@ -4,8 +4,11 @@ ROM Loader for Mega Man X Legacy Collection
 This .asi script hooks the internal ROM loading system used by the emulator and allows the game to load external .sfc ROM files from disk instead of only using the ROM embedded inside RXC1.exe.
 
 Currently supported:<br/>
+Rock Man X<br/>
 Mega Man X<br/>
+Rock Man X2<br/>
 Mega Man X2<br/>
+Rock Man X3<br/>
 Mega Man X3<br/>
 
 # Install:
@@ -14,12 +17,6 @@ Drop RXC1.exe into "mmxlc_rom_extract_to_roms.py" to extract the roms<br/>
 The extracted ROMs will be placed inside the "roms" folder<br/>
 Replace them with your own ROMs if desired.<br/>
 Enjoy
-
-# Warning:
-ROM files must be the exact expected size or smaller to work correctly.<br/>
-Smaller ROMs are automatically padded with 00.<br/>
-Larger ROMs are currently not supported due to internal emulator size limitations.<br/>
-Maybe in future versions, i'll add support for bigger roms (Zero Project)
 
 # Build requirements
 Visual Studio<br/>

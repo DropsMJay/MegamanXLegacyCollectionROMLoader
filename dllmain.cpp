@@ -23,7 +23,7 @@
 //- The only active internal hook in this release is MapRomBanksToEmulatorMemory (FUN_00AD53C0).
 //------------------------------------------------------------
 
-#define RXC1_ENABLE_LOG 0
+#define RXC1_ENABLE_LOG 0 //Turn on/off debugging log
 
 //------------------------------------------------------------
 //Debug / investigation typedefs kept for reference.
@@ -69,12 +69,9 @@ CreateFileW_t OriginalCreateFileW = nullptr;
 //Creates a reusable function pointer type for the original RXC1 internal function
 //responsible for mapping ROM banks into emulator memory.
 typedef DWORD(__cdecl* MapRomBanksToEmulatorMemory_t)(
-    //Main game/emulator structure (current loaded game)
-    DWORD GameDriver,
-    //Pointer to the beginning of the loaded ROM data
-    BYTE* RomBase,
-    //Total ROM size in bytes
-    DWORD RomSize
+    DWORD GameDriver, //Main game/emulator structure (current loaded game)
+    BYTE* RomBase, //Pointer to the beginning of the loaded ROM data
+    DWORD RomSize     //Total ROM size in bytes
     );
 
 //Stores the original RXC1 function address before the hook redirects execution.
@@ -190,37 +187,63 @@ bool LoadExternalRomOnce(ExternalRomSlot* Slot, DWORD ExpectedSize) //Loads an e
 
     //Gets the external ROM file size in bytes.
     DWORD FileSize = GetFileSize(FileHandle, nullptr);
+    //FileHandle = Handle of the opened ROM file
+    //nullptr = No high-order size needed (files are small enough for DWORD)
 
-    //Logs the real file size and the size expected by the internal emulator mapping.
-    char Buffer[512];
+    //Gets the real size of the external ROM file from disk.
+    //Formats a readable debug message showing:
+    // - Which ROM file was opened
+    // - The real file size from disk
+    // - The original size expected by the emulator
+    // Example:
+    // External ROM file: roms\rockmanx3.sfc | Size: 00400000 | Expected/MapSize: 00200000
+    char Buffer[512]; //Creates a temporary text buffer used to build the log message.
     sprintf_s(
-        Buffer,
-        "External ROM file: %s | Size: %08X | Expected/MapSize: %08X\r\n",
-        Slot->FilePath,
-        FileSize,
-        ExpectedSize
+        Buffer, //Destination text buffer
+        "External ROM file: %s | Size: %08X | Expected/MapSize: %08X\r\n", //Debug text
+        Slot->FilePath, //ROM file path being loaded
+        FileSize, //Real ROM size found on disk
+        ExpectedSize //Original ROM size expected by RXC1.exe
     );
-    WriteLogLine(Buffer);
+    WriteLogLine(Buffer); //Writes the formatted message into RXC1_file_log.txt and also sends it to debugger output if logging is enabled.
 
-    //If the external ROM is bigger than the emulator expects,
-    //reject it for now to avoid memory mapping problems or crashes.
-    if (FileSize > ExpectedSize)
+    //If the external ROM is bigger than the emulator expects, reject it for now to avoid memory mapping problems or crashes.
+    /*if (FileSize > ExpectedSize)
     {
         WriteLogLine("External ROM is larger than expected. Using internal ROM source.\r\n");
         CloseHandle(FileHandle); //Closes the file before leaving the function.
         return false; //Loading failed, so the original internal ROM will be used.
-    }
+    }*/
 
-    //Allocates memory for the ROM using the emulator expected size,
-    //not only the real file size.
-    BYTE* BufferData = (BYTE*)VirtualAlloc(
-        nullptr,
-        ExpectedSize,
-        MEM_COMMIT | MEM_RESERVE,
-        PAGE_READWRITE
+    //Defines how much memory will be allocated for the ROM buffer.
+    // Starts using the real external ROM size from disk.
+    // Example:
+    // If the ROM file is 4MB → AllocSize starts as 0x400000
+    DWORD AllocSize = FileSize;
+    //If the external ROM is smaller than the original internal ROM,
+    //use the original expected size instead.
+    //
+    // This keeps compatibility with smaller ROMs by preserving the
+    // emulator's original mapped size and automatically padding
+    // the remaining space with 00 bytes.
+    //
+    // Example:
+    // FileSize     = 0x180000
+    // ExpectedSize = 0x200000
+    //
+    // Result:
+    // AllocSize = 0x200000
+    if (AllocSize < ExpectedSize)
+        AllocSize = ExpectedSize;
+
+    BYTE* BufferData = (BYTE*)VirtualAlloc( //Allocates memory in RAM for the external ROM. This creates a new buffer where the ROM will be loaded.
+        nullptr, //let Windows choose the address
+        AllocSize,//total size to allocate
+        MEM_COMMIT | MEM_RESERVE,//reserve + make memory usable
+        PAGE_READWRITE//readable and writable memory
     );
 
-    if (!BufferData)
+    if (!BufferData) //Checks if VirtualAlloc failed.
     {
         WriteLogLine("VirtualAlloc failed for external ROM.\r\n");
         CloseHandle(FileHandle);
@@ -247,14 +270,15 @@ bool LoadExternalRomOnce(ExternalRomSlot* Slot, DWORD ExpectedSize) //Loads an e
     }
 
     Slot->Data = BufferData; //Saves the loaded ROM buffer inside this game's ROM slot.
-    Slot->Size = ExpectedSize; //Stores the padded/mapped ROM size, not only the file size.
+    Slot->Size = AllocSize; //Stores the padded/mapped ROM size, not only the file size.
 
-    sprintf_s( //Logs that the external ROM was loaded successfully.
+    //Creates a success log after the external ROM was fully loaded.
+    sprintf_s(
         Buffer,
         "External ROM loaded successfully for %s. Read=%08X | PaddedTo=%08X\r\n",
         Slot->GameName,
         FileSize,
-        ExpectedSize
+        AllocSize
     );
     WriteLogLine(Buffer);
 
@@ -305,37 +329,49 @@ DWORD __cdecl Hooked_MapRomBanksToEmulatorMemory(
     const char* CurrentGameName = nullptr;
 
     //Safely reads the current game name.
-    if (CurrentGameNamePointer && *CurrentGameNamePointer)
+    if (CurrentGameNamePointer && *CurrentGameNamePointer) // If the pointer is valid, store the current game name.
         CurrentGameName = *CurrentGameNamePointer;
 
-    char Buffer[512];
-    sprintf_s(
+    char Buffer[512]; //Temporary text buffer used to build the log message.
+    sprintf_s( //Creates a debug log showing:
         Buffer,
         "MapRomBanksToEmulatorMemory | Game=%s | GameDriver=%08X | RomBase=%08X | RomSize=%08X\r\n",
-        CurrentGameName ? CurrentGameName : "(null)",
-        GameDriver,
-        (DWORD)RomBase,
-        RomSize
+        CurrentGameName ? CurrentGameName : "(null)", //Current game name
+        GameDriver, //Main emulator/game structure
+        (DWORD)RomBase, //Original internal ROM pointer
+        RomSize //Original expected ROM size
     );
-    WriteLogLine(Buffer);
+    WriteLogLine(Buffer); //Writes the message to the log file.
 
     ExternalRomSlot* Slot = FindExternalRomSlot(CurrentGameName); //Searches for a matching external ROM slot for this game.
 
-    if (Slot && LoadExternalRomOnce(Slot, RomSize))
+    if (Slot && LoadExternalRomOnce(Slot, RomSize)) //If a valid external ROM was found and loaded successfully, prepare to replace the internal ROM from RXC1.exe.
     {
-        sprintf_s(
+        sprintf_s( //Writes in the debug log
             Buffer,
             "Replacing internal ROM source with external ROM: %s\r\n",
-            Slot->FilePath
+            Slot->FilePath //External ROM file path
         );
         WriteLogLine(Buffer);
 
         //Calls the original RXC1 function, but now using the external ROM
         //loaded from disk instead of the internal ROM embedded in the .exe.
+
+        sprintf_s(
+            Buffer,
+            "MapRomBanksToEmulatorMemory called | InternalRomBase=%08X | ExternalRomBase=%08X | OriginalRomSize=%08X | ExternalSize=%08X\r\n",
+            (DWORD)RomBase, //Original internal ROM pointer from RXC1.exe
+            (DWORD)Slot->Data, //External ROM buffer loaded from disk
+            RomSize, //Original emulator expected ROM size
+            Slot->Size //Final size used (supports expanded ROMs)
+        );
+        WriteLogLine(Buffer); //Writes the debug message to the log file.
+
         return Original_MapRomBanksToEmulatorMemory(
             GameDriver, //Same emulator/game structure
             Slot->Data, //External ROM buffer loaded in memory
-            RomSize //Original expected emulator ROM size
+            Slot->Size //Final ROM size (supports expanded ROMs)
+            //RomSize //Original expected emulator ROM size
         );
     }
 
